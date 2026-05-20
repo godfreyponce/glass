@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portfolio Dashboard
 
-## Getting Started
+A deployed Next.js 16 app that renders a project portfolio from markdown files.
+The markdown files in `content/projects/*.md` are the source of truth; the
+dashboard is a view over them. Phase 1 — no database, no auth (see `PLAN.md`).
 
-First, run the development server:
+- **Dashboard** (`/`) — projects grouped into In Progress / Planned / Completed.
+- **Detail** (`/projects/[slug]`) — full metadata + rendered markdown body.
+  `local_path` is private and only shown with `?private=1`.
+- **New Project** (`/new`) — a form that commits a new `.md` to the repo via the
+  GitHub API, gated by a passphrase. The commit triggers a Vercel redeploy.
+
+## Stack
+
+Next.js 16 (App Router) · TypeScript (strict) · Tailwind CSS v4 ·
+`gray-matter` · `remark`/`remark-html` · `zod` (schema) · `@octokit/rest`.
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then fill in the values below
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Required environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable           | Purpose                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| `GITHUB_TOKEN`     | Fine-grained PAT, scoped to **only** this repo, Contents: R/W.  |
+| `GITHUB_OWNER`     | GitHub user/org that owns the repo.                            |
+| `GITHUB_REPO`      | Repo name where markdown lives.                                |
+| `GITHUB_BRANCH`    | Branch to commit to (default `main`).                          |
+| `API_WRITE_SECRET` | Passphrase the `/new` form must send; checked server-side.     |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Only `GITHUB_TOKEN` and `API_WRITE_SECRET` are secret. Set all of them in the
+Vercel project settings for the deployed app; the form's passphrase field is
+validated against `API_WRITE_SECRET` and never ships to the client bundle.
 
-## Learn More
+## Adding a project
 
-To learn more about Next.js, take a look at the following resources:
+**Path 1 — manually (recommended for control):** create
+`content/projects/<slug>.md` with frontmatter matching the locked schema in
+`lib/schema.ts` (see any seed file for a template), commit, push. Vercel
+redeploys and it appears.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Path 2 — the form:** go to `/new`, fill it in, enter the passphrase, submit.
+The API route (`app/api/projects/route.ts`) validates against the Zod schema,
+derives a kebab-case slug from the name if you leave slug blank, and commits
+`content/projects/<slug>.md` via Octokit. Existing slugs are rejected (409).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Path 3 — agentic import:** to add an *existing* project on your machine, run
+Claude Code from inside that project's directory and paste `RECON_PROMPT.md`.
+It emits schema-conformant YAML you paste into the `/new` form (or hand to the
+API). See `RECON_PROMPT.md`.
 
-## Deploy on Vercel
+The frontmatter schema is the spine of the app — read the "Schema is sacred"
+section of `CLAUDE.md` before changing it.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Verify
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # eslint .
+npm run build       # production build
+```
+
+## Deploy to Vercel
+
+1. Push this repo to GitHub.
+2. Import it in Vercel (framework auto-detected as Next.js).
+3. Add the five environment variables above in Project Settings → Environment
+   Variables (Production + Preview).
+4. Deploy. The GitHub token's repo must match `GITHUB_OWNER`/`GITHUB_REPO` so
+   that form submissions commit back to the same repo and trigger redeploys.
+
+## Phase 2 (not started)
+
+Migrating the read layer from the filesystem to Postgres/Prisma, plus real auth
+and edit/delete — a deliberate database-learning project. Do not start without
+explicit instruction (`PLAN.md`).

@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-canvas: #fbfbfa;
+  --color-surface: #ffffff;
+  --color-line: #eaeaea;
+  --color-ink: #2f3437;
+  --color-muted: #787774;
+
+  --color-status-progress-bg: #e1f3fe;
+  --color-status-progress-fg: #1f6c9f;
+  --color-status-planned-bg: #fbf3db;
+  --color-status-planned-fg: #956400;
+  --color-status-completed-bg: #edf3ec;
+  --color-status-completed-fg: #346538;
+  --color-status-archived-bg: #f1f1ef;
+  --color-status-archived-fg: #6b6b68;
+
+  --font-sans: var(--font-geist-sans), "Helvetica Neue", sans-serif;
+  --font-mono: var(--font-geist-mono), "SF Mono", monospace;
+  --font-serif: var(--font-newsreader), "Newsreader", Georgia, serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+::selection {
+  background: #fbf3db;
+}
+
+/* Quiet scroll-entry: present but never distracting. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--index, 0) * 80ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}
+
+/* Markdown body rendered by remark-html on the detail page. */
+.prose {
+  color: var(--color-ink);
+  line-height: 1.7;
+}
+.prose h1 {
+  font-family: var(--font-serif);
+  font-size: 1.875rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 2rem 0 1rem;
+}
+.prose h2 {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+  margin: 2rem 0 0.75rem;
+}
+.prose h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+.prose p {
+  margin: 0 0 1rem;
+}
+.prose ul,
+.prose ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+.prose li {
+  margin: 0.25rem 0;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose a {
+  color: var(--color-status-progress-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: #f1f1ef;
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+}
+.prose pre {
+  background: #f7f6f3;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0 0 1rem;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+.prose blockquote {
+  border-left: 2px solid var(--color-line);
+  padding-left: 1rem;
+  color: var(--color-muted);
+  margin: 0 0 1rem;
 }
