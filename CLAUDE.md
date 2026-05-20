@@ -2,7 +2,7 @@
 > This file is read by Claude Code at the start of every session in this project. Keep it lean — every rule competes for attention.
 
 ## Project
-Personal portfolio dashboard. A deployed Next.js 16 app that renders my project portfolio from markdown files in `content/projects/*.md`. Two ingestion paths: a `/new` form that commits a new `.md` to the repo via Octokit, and an agentic recon path where Claude Code (in *another* directory) outputs YAML frontmatter I paste in. Markdown is the source of truth in Phase 1. Phase 2 is a deliberate migration to Postgres as a database-learning project — do not start it without explicit instruction.
+**Glass** — a deployed Next.js 16 portfolio dashboard. `content/projects/*.md` files are the source of truth; the app is a typed view over them. Live: https://glass-green-one.vercel.app — Repo: https://github.com/godfreyponce/glass. Phase 1 is shipped. Phase 2 is a deliberate migration to Postgres as a database-learning project — tracked as a card *inside* the dashboard; do not start the migration without explicit instruction.
 
 ## Stack
 - Runtime: Node 20 / npm
@@ -10,8 +10,35 @@ Personal portfolio dashboard. A deployed Next.js 16 app that renders my project 
 - Content: Markdown files in `content/projects/`, parsed with `gray-matter`, validated with `zod`, rendered with `remark` + `remark-html`
 - Writes: `@octokit/rest` against the portfolio repo. Env (`.env.local`, mirrored in `.env.example`): `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_BRANCH` (default `main`), `API_WRITE_SECRET`
 - Write gate: `/api/projects` compares a form passphrase to `API_WRITE_SECRET` — a single env-secret string check, not an auth library or session. Compliant with the "no auth in Phase 1" rule below
-- Deploy: Vercel
+- Deploy: Vercel (auto-deploys from `main`)
 - Tests: Vitest (add when first non-trivial logic appears — don't scaffold prematurely)
+
+## Feature surface (Phase 1)
+- `/` — dashboard home; cards grouped by status in collapsible sections (In Progress open by default). Empty Planned section has a spot illustration.
+- `/projects/[slug]` — detail page; full frontmatter table + rendered markdown body; `local_path` only shown with `?private=1`.
+- `/new` — manual form; passphrase field + POST to `/api/projects`; commits a new `.md` via Octokit.
+- `/new/quick` — **dev-only** chat panel that spawns local `claude` headless (`-p --output-format stream-json`, MAX-plan OAuth, no API key); Claude writes the file directly via its Write tool.
+- **Inline editing** — padlock toggle (top-right of dashboard + detail) unlocks edit mode after passphrase check against `/api/auth/check`. Every frontmatter field is double-click-editable (`<EditableField>`); markdown body has an explicit "Edit body" button (`<EditableBody>`). Esc cancels, Enter (or Cmd/Ctrl+Enter for textareas) saves.
+- **Hybrid persistence** — dev writes to `content/projects/*.md` on disk for instant feedback (router.refresh); prod commits via Octokit and shows a "Redeploying ~Ns" banner (`<RedeployBanner>`) with optimistic UI during the ~60s redeploy lag.
+- Esc-to-go-back on detail / `/new` / `/new/quick`.
+
+## Critical files
+- `lib/schema.ts` — the Zod spine. `projectFrontmatterSchema` for full files, `projectInputSchema` for POST, `projectPatchSchema` for PATCH (strict; `body` lives alongside frontmatter for transport).
+- `lib/projects.ts` — server-side read (`readAllProjects`, `readProject`).
+- `lib/persist.ts` — hybrid write (`persistProjectFile` branches on `NODE_ENV`) + `readCurrentProject` (fetches latest from GitHub in prod to avoid stale-bundle clobbers).
+- `lib/github.ts` — Octokit client; `createProjectFile` (no-clobber, used by POST) and `updateProjectFile` (overwrite-allowed, used by PATCH).
+- `lib/markdown.ts` — `serializeProject` (gray-matter stringify).
+- `lib/claude-code.ts` — `spawnClaudeCode` + `SYSTEM_PROMPT`; dev-only headless spawner.
+- `app/api/projects/route.ts` — **POST** create; passphrase in body.
+- `app/api/projects/[slug]/route.ts` — **PATCH** update; passphrase in `x-passphrase` header; accepts frontmatter fields and `body`.
+- `app/api/quick/route.ts` — SSE proxy to local Claude Code; returns 503 in prod.
+- `app/api/auth/check/route.ts` — passphrase validator for the LockToggle.
+- `components/LockProvider.tsx` + `LockToggle.tsx` — sessionStorage-backed edit state via `useLock()`.
+- `components/EditableField.tsx` + `EditableBody.tsx` — inline-edit primitives.
+- `components/QuickChat.tsx` — dev-only Claude Code chat UI with SSE parsing.
+- `components/ProjectCard.tsx` / `ProjectSection.tsx` / `StatusBadge.tsx` / `RedeployBanner.tsx` / `EditableDetailView.tsx` / `NewProjectForm.tsx` / `EscToGoBack.tsx` / `PlannedSketch.tsx` — supporting UI.
+- `content/projects/*.md` — the data.
+- `.env.example` — full list of 5 env vars needed in Vercel and `.env.local`.
 
 ## How to verify your changes
 Run these yourself before claiming "done."
@@ -60,8 +87,8 @@ The Zod schema in `lib/schema.ts` is the spine of the entire app. The form, the 
 - Spec content (PLAN.md, this file) beats your assumptions. When in doubt, reread what I gave you.
 
 ## Pointers
-- **Spec:** @PLAN.md — full architecture, locked frontmatter schema, page-by-page breakdown, Phase 2 preview. Read first on every new session.
-- **Build order:** @CLAUDE_CODE_PROMPT.md — 13-step sequence for the initial scaffold. Already executed if `app/` exists.
-- **Recon prompt (do not run here):** @RECON_PROMPT.md — pasted into Claude Code in *other* project directories to generate frontmatter for import. Not used in this repo's workflow except as reference.
+- **Spec (historical):** @PLAN.md — original architecture + Phase 2 preview. Still authoritative for the locked frontmatter schema and Phase 2 intent. Some specifics drifted during the build (Next.js 16 not 14, hybrid persistence + lock+inline edit + `/new/quick` added) — see "Feature surface" above for current state.
+- **Scaffold history:** @CLAUDE_CODE_PROMPT.md — the original 13-step build prompt. Already executed; reference only.
+- **Recon prompt (do not run here):** @RECON_PROMPT.md — pasted into Claude Code in *other* project directories to generate frontmatter for import. Not run in this repo.
 - README: @README.md
 - Scripts: @package.json
