@@ -1,14 +1,24 @@
 ---
-name: "Arduino Starter Kit Book"
-slug: "arduino-starter-kit"
-status: "in-progress"
-priority: "low"
-stack: ["Arduino", "C++", "Electronics"]
-started: "2026-05-20"
-last_worked_on: "2026-05-20"
-next_action: "Continue with the next project in the Arduino Starter Kit book where I left off (~5% in)."
-recruiter_pitch: "Working through the official Arduino Starter Kit book to build hardware fundamentals — circuits, sensors, and embedded C++."
-tags: ["hardware", "embedded", "learning"]
+slug: arduino-starter-kit
+name: Arduino Starter Kit
+status: in-progress
+priority: low
+stack:
+  - Arduino
+  - C++
+  - Electronics
+started: '2026-05-20'
+last_worked_on: '2026-05-20'
+next_action: >-
+  Continue with the next project in the Arduino Starter Kit book where I left
+  off (~5% in).
+recruiter_pitch: >-
+  Working through the official Arduino Starter Kit book to build hardware
+  fundamentals — circuits, sensors, and embedded C++.
+tags:
+  - hardware
+  - embedded
+  - learning
 ---
 
 # Arduino Starter Kit Book
