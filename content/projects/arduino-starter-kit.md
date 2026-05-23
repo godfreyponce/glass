@@ -25,4 +25,4 @@ tags:
 
 Working through the official Arduino Projects Book that ships with the starter kit. Goal is hands-on familiarity with breadboards, sensors, motors, and the Arduino C++ dialect.
 
-Currently around 5% through — early intro projects done. Plan to push through one project per session and log notes per chapter as I go.
+Currently around 5% through, early intro projects done. Plan to push through one project per session and log notes per chapter as I go.
