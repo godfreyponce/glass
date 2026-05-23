@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Locked frontmatter schema — the spine of the app (see PLAN.md).
+ * Locked frontmatter schema — the spine of the app (see CLAUDE.md → "Schema is sacred").
  * The read layer, the API route, the form, and every `.md` file all
  * conform to this. Never loosen it without flagging a breaking change.
  */

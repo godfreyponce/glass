@@ -39,6 +39,20 @@ field-for-field, write a one-shot script that reads every existing `.md` and
 inserts the rows, then flip the dashboard's read functions over to Prisma.
 Markdown export stays as a backup sync path so Obsidian remains useful.
 
+## Also in Phase 2
+
+- **Real auth** — replace the Phase 1 passphrase gate (`API_WRITE_SECRET`) with
+  Supabase Auth / GitHub OAuth. The passphrase is a deliberate stopgap.
+- **Delete via UI** — Phase 1 shipped inline *editing* ahead of schedule; deleting
+  a project from the UI still doesn't exist and lands here.
+- **Publish the migration writeup** — the migration is the learning artifact; turn
+  it into a blog post or a detail page on the dashboard itself.
+
+## Open question
+
+- **Whole-project privacy** — beyond the current `local_path` `?private=1` gate, do
+  private *projects* get a frontmatter flag, or just never get committed? Undecided.
+
 ## Why this is on the Planned shelf
 
 Waiting until Phase 1 has settled and there are ~10 real projects to migrate.

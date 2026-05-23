@@ -84,11 +84,10 @@ The Zod schema in `lib/schema.ts` is the spine of the entire app. The form, the 
 - Direct. No "Great question!" or "Let me know if you need anything else!"
 - If I'm wrong, tell me. Cite file:line.
 - If you were wrong, acknowledge in one line and move on.
-- Spec content (PLAN.md, this file) beats your assumptions. When in doubt, reread what I gave you.
+- Spec content (this file, the README, the schema in `lib/schema.ts`) beats your assumptions. When in doubt, reread what I gave you.
 
 ## Pointers
-- **Spec (historical):** @PLAN.md — original architecture + Phase 2 preview. Still authoritative for the locked frontmatter schema and Phase 2 intent. Some specifics drifted during the build (Next.js 16 not 14, hybrid persistence + lock+inline edit + `/new/quick` added) — see "Feature surface" above for current state.
-- **Scaffold history:** @CLAUDE_CODE_PROMPT.md — the original 13-step build prompt. Already executed; reference only.
+- **Phase 2 / roadmap:** lives as a project card — `content/projects/portfolio-phase-2.md` (rendered at `/projects/portfolio-phase-2`). Authoritative for Phase 2 scope + open design questions. (The original `PLAN.md` / `CLAUDE_CODE_PROMPT.md` scaffolding were deleted once Phase 1 shipped; recover from git history if ever needed.)
 - **Recon prompt (do not run here):** @RECON_PROMPT.md — pasted into Claude Code in *other* project directories to generate frontmatter for import. Not run in this repo.
-- README: @README.md
+- README: @README.md — human-facing setup + feature overview.
 - Scripts: @package.json
