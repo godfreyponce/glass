@@ -12,6 +12,15 @@ entry_point: "app/main.py"
 local_path: "~/projects/pfizer-externship"
 recruiter_pitch: "A 10-week Extern.com externship with Pfizer building a retrieval-augmented document intelligence system over regulatory documents."
 tags: ["externship", "rag", "nlp", "python"]
+api_keys:
+  - provider: "openai"
+    label: "extern sandbox"
+    location: ".env.local · ~/projects/pfizer-externship"
+    env_var: "OPENAI_API_KEY"
+  - provider: "anthropic"
+    label: "personal"
+    location: "1Password → Anthropic"
+    env_var: "ANTHROPIC_API_KEY"
 ---
 
 # Pfizer Externship — Document Intelligence
