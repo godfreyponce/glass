@@ -1,6 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
+
+import { FOCUS_PROJECT_EVENT, type FocusProjectDetail } from "@/lib/focus";
 
 /**
  * Collapsible section: header acts as a toggle button; the grid of project
@@ -12,6 +14,7 @@ export default function ProjectSection({
   count,
   defaultOpen = false,
   icon,
+  slugs = [],
   children,
 }: {
   title: string;
@@ -19,10 +22,23 @@ export default function ProjectSection({
   defaultOpen?: boolean;
   /** Optional tiny mark rendered before the title (e.g. for Planned). */
   icon?: React.ReactNode;
+  /** Slugs of the projects in this section — used to auto-expand on focus. */
+  slugs?: string[];
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
+
+  // Auto-expand when one of this section's projects is targeted from the
+  // Keys popover, so the card is visible before it scrolls into view.
+  useEffect(() => {
+    function onFocus(e: Event) {
+      const detail = (e as CustomEvent<FocusProjectDetail>).detail;
+      if (detail && slugs.includes(detail.slug)) setOpen(true);
+    }
+    window.addEventListener(FOCUS_PROJECT_EVENT, onFocus);
+    return () => window.removeEventListener(FOCUS_PROJECT_EVENT, onFocus);
+  }, [slugs]);
 
   return (
     <section className="mt-12">

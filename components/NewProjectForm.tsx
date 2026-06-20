@@ -15,6 +15,13 @@ interface IssueError {
   message: string;
 }
 
+interface KeyRow {
+  provider: string;
+  label: string;
+  location: string;
+  env_var: string;
+}
+
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -25,8 +32,15 @@ export default function NewProjectForm() {
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<IssueError[]>([]);
   const [status, setStatus] = useState<string>("planned");
+  const [apiKeys, setApiKeys] = useState<KeyRow[]>([]);
 
   const needsNextAction = status === "in-progress" || status === "planned";
+
+  function updateKey(index: number, field: keyof KeyRow, value: string) {
+    setApiKeys((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -61,6 +75,16 @@ export default function NewProjectForm() {
       recruiter_pitch: optional(str("recruiter_pitch")),
       tags: list("tags").length > 0 ? list("tags") : undefined,
     };
+
+    const cleanedKeys = apiKeys
+      .map((k) => ({
+        provider: k.provider.trim().toLowerCase(),
+        location: k.location.trim(),
+        label: optional(k.label.trim()),
+        env_var: optional(k.env_var.trim()),
+      }))
+      .filter((k) => k.provider.length > 0 && k.location.length > 0);
+    if (cleanedKeys.length > 0) payload.api_keys = cleanedKeys;
 
     try {
       const res = await fetch("/api/projects", {
@@ -286,6 +310,69 @@ export default function NewProjectForm() {
           placeholder="ai, freelance, nlp"
           className={FIELD}
         />
+      </div>
+
+      <div>
+        <label className={LABEL}>
+          API keys{" "}
+          <span className="lowercase tracking-normal">
+            (optional — metadata only, never the secret)
+          </span>
+        </label>
+        <div className="flex flex-col gap-2">
+          {apiKeys.map((row, i) => (
+            <div key={i} className="grid grid-cols-[0.8fr_0.8fr_1.3fr_1fr_auto] gap-2">
+              <input
+                value={row.provider}
+                onChange={(e) => updateKey(i, "provider", e.target.value)}
+                placeholder="anthropic"
+                aria-label="Provider"
+                className={`${FIELD} font-mono`}
+              />
+              <input
+                value={row.label}
+                onChange={(e) => updateKey(i, "label", e.target.value)}
+                placeholder="personal"
+                aria-label="Label (optional)"
+                className={FIELD}
+              />
+              <input
+                value={row.location}
+                onChange={(e) => updateKey(i, "location", e.target.value)}
+                placeholder="1Password → Anthropic"
+                aria-label="Where it's stored"
+                className={FIELD}
+              />
+              <input
+                value={row.env_var}
+                onChange={(e) => updateKey(i, "env_var", e.target.value)}
+                placeholder="ANTHROPIC_API_KEY"
+                aria-label="Env var (optional)"
+                className={`${FIELD} font-mono`}
+              />
+              <button
+                type="button"
+                onClick={() => setApiKeys((rows) => rows.filter((_, j) => j !== i))}
+                aria-label="Remove API key"
+                className="rounded-[6px] border border-line bg-surface px-3 text-sm text-muted hover:text-ink"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() =>
+              setApiKeys((rows) => [
+                ...rows,
+                { provider: "", label: "", location: "", env_var: "" },
+              ])
+            }
+            className="inline-flex w-fit items-center gap-1.5 rounded-[6px] border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-[#f7f6f3]"
+          >
+            <span aria-hidden>+</span> Add API key
+          </button>
+        </div>
       </div>
 
       <div className="border-t border-line pt-5">

@@ -5,6 +5,8 @@ import { format, parseISO } from "date-fns";
 import type { ProjectFrontmatter } from "@/lib/schema";
 import StatusBadge from "@/components/StatusBadge";
 import EditableField from "@/components/EditableField";
+import ProviderLogo from "@/components/ProviderLogo";
+import { providerLabel } from "@/lib/keys";
 import { useLock } from "@/components/LockProvider";
 
 const STATUS_OPTIONS = [
@@ -266,6 +268,34 @@ export default function EditableDetailView({
             }
           />
         </MetaRow>
+
+        {fm.api_keys && fm.api_keys.length > 0 && (
+          <MetaRow label="API keys">
+            <ul className="flex flex-col gap-2">
+              {fm.api_keys.map((k, i) => (
+                <li
+                  key={`${k.provider}-${i}`}
+                  className="flex flex-wrap items-center gap-x-2 gap-y-1"
+                >
+                  <ProviderLogo provider={k.provider} box="h-[20px] w-[20px]" />
+                  <span className="text-ink">{providerLabel(k.provider)}</span>
+                  {k.label && (
+                    <span className="rounded bg-[#f1f1ef] px-1.5 py-0.5 text-[0.72rem] text-muted">
+                      {k.label}
+                    </span>
+                  )}
+                  <span className="text-muted">·</span>
+                  <span className="text-muted">{k.location}</span>
+                  {k.env_var && (
+                    <code className="rounded bg-[#f1f1ef] px-1.5 py-0.5 font-mono text-[0.72rem] text-muted">
+                      {k.env_var}
+                    </code>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </MetaRow>
+        )}
 
         {showPrivate && (
           <MetaRow label="Local path">

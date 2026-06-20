@@ -1,11 +1,18 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 
 import type { ProjectFrontmatter } from "@/lib/schema";
 import StatusBadge from "@/components/StatusBadge";
 import EditableField from "@/components/EditableField";
+import KeyBadge from "@/components/KeyBadge";
+import {
+  FOCUS_PROJECT_EVENT,
+  playFocusPop,
+  type FocusProjectDetail,
+} from "@/lib/focus";
 import { useLock } from "@/components/LockProvider";
 
 const MAX_STACK = 4;
@@ -18,6 +25,27 @@ export default function ProjectCard({
   index?: number;
 }) {
   const { locked } = useLock();
+
+  // Jump-to-card from the Keys popover: scroll into view + highlight. If the
+  // card's section is collapsed (inert), wait for it to expand first.
+  useEffect(() => {
+    function onFocus(e: Event) {
+      const detail = (e as CustomEvent<FocusProjectDetail>).detail;
+      if (!detail || detail.slug !== project.slug) return;
+      const el = document.getElementById(`project-${project.slug}`);
+      if (!el) return;
+      const collapsed = !!el.closest("[inert]");
+      window.setTimeout(
+        () => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          playFocusPop(el);
+        },
+        collapsed ? 360 : 0,
+      );
+    }
+    window.addEventListener(FOCUS_PROJECT_EVENT, onFocus);
+    return () => window.removeEventListener(FOCUS_PROJECT_EVENT, onFocus);
+  }, [project.slug]);
 
   const visibleStack = project.stack.slice(0, MAX_STACK);
   const overflow = project.stack.length - visibleStack.length;
@@ -33,6 +61,7 @@ export default function ProjectCard({
   return (
     <Wrapper
       {...wrapperProps}
+      id={`project-${project.slug}`}
       style={{ "--index": index } as React.CSSProperties}
       className="rise group flex flex-col rounded-xl border border-line bg-surface p-6 transition-shadow duration-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
     >
@@ -45,14 +74,19 @@ export default function ProjectCard({
             initialValue={project.name}
           />
         </h3>
-        <EditableField
-          slug={project.slug}
-          field="status"
-          type="select"
-          initialValue={project.status}
-          options={["planned", "in-progress", "completed", "archived"]}
-          display={(v) => <StatusBadge status={v as ProjectFrontmatter["status"]} />}
-        />
+        <div className="flex items-center gap-2">
+          {project.api_keys && project.api_keys.length > 0 && (
+            <KeyBadge apiKeys={project.api_keys} />
+          )}
+          <EditableField
+            slug={project.slug}
+            field="status"
+            type="select"
+            initialValue={project.status}
+            options={["planned", "in-progress", "completed", "archived"]}
+            display={(v) => <StatusBadge status={v as ProjectFrontmatter["status"]} />}
+          />
+        </div>
       </div>
 
       <p className="mt-3 text-sm text-muted">

@@ -6,7 +6,9 @@ import ProjectCard from "@/components/ProjectCard";
 import ProjectSection from "@/components/ProjectSection";
 import PlannedSketch from "@/components/PlannedSketch";
 import LockToggle from "@/components/LockToggle";
+import KeysPopover from "@/components/KeysPopover";
 import RedeployBanner from "@/components/RedeployBanner";
+import { aggregateKeys, totalKeyCount } from "@/lib/keys";
 import { isAvailable as quickAddAvailable } from "@/lib/claude-code";
 
 const SECTIONS: {
@@ -93,9 +95,12 @@ export default async function HomePage() {
   const byStatus = (status: ProjectStatus): ProjectFrontmatter[] =>
     projects.filter((p) => p.status === status);
 
+  const keyGroups = aggregateKeys(projects);
+  const keyTotal = totalKeyCount(keyGroups);
+
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-20 sm:py-28">
-      <header className="rise flex flex-col gap-6 border-b border-line pb-12 sm:flex-row sm:items-end sm:justify-between">
+      <header className="rise relative z-30 flex flex-col gap-6 border-b border-line pb-12 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-xl">
           <h1 className="font-serif text-4xl tracking-[-0.03em] text-ink sm:text-5xl">
             Glass
@@ -107,6 +112,7 @@ export default async function HomePage() {
         </div>
         <div className="flex items-center gap-2">
           <LockToggle />
+          <KeysPopover groups={keyGroups} total={keyTotal} />
           {quickAddAvailable() && (
             <Link
               href="/new/quick"
@@ -119,7 +125,7 @@ export default async function HomePage() {
           )}
           <Link
             href="/new"
-            className="inline-flex w-fit items-center gap-2 rounded-[6px] bg-[#111111] px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#333333] active:scale-[0.98]"
+            className="inline-flex w-fit items-center gap-2 whitespace-nowrap rounded-[6px] bg-[#111111] px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#333333] active:scale-[0.98]"
           >
             <span aria-hidden className="text-base leading-none">
               +
@@ -149,6 +155,7 @@ export default async function HomePage() {
             count={items.length}
             defaultOpen={defaultOpen}
             icon={isPlanned ? <PlannedHeaderIcon /> : undefined}
+            slugs={items.map((p) => p.slug)}
           >
             {items.length === 0 && isPlanned ? (
               <PlannedEmptyState />
