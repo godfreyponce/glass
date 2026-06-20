@@ -23,6 +23,22 @@ const slugField = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Must be kebab-case (a-z, 0-9, hyphens)");
 
+/**
+ * A pointer to an API key this project uses. Metadata only — never the secret.
+ * `provider` is a lowercase id that maps to /logos/<provider>.png; `location`
+ * is where YOU access the real key (1Password, an .env file, …).
+ */
+export const apiKeySchema = z.object({
+  provider: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, "provider must be a lowercase id (a-z, 0-9, hyphens)"),
+  location: z.string().min(1, "location is required"),
+  // Human name that distinguishes multiple keys from the same provider
+  // (e.g. "personal" vs "client-acme"). Identity falls back to location.
+  label: z.string().min(1).optional(),
+  env_var: z.string().min(1).optional(),
+});
+
 const baseShape = {
   name: z.string().min(1, "name is required"),
   status: z.enum(STATUS_VALUES),
@@ -39,6 +55,8 @@ const baseShape = {
   live_url: z.url().optional(),
   recruiter_pitch: z.string().min(1).optional(),
   tags: z.array(z.string().min(1)).optional(),
+  // Pointers to the project's active API keys — metadata only, never secrets.
+  api_keys: z.array(apiKeySchema).optional(),
 };
 
 type RefineInput = { status: (typeof STATUS_VALUES)[number]; next_action?: string };
@@ -69,6 +87,7 @@ export const projectInputSchema = z
   .object({ slug: slugField.optional(), ...baseShape })
   .superRefine(requireNextAction);
 
+export type ApiKey = z.infer<typeof apiKeySchema>;
 export type ProjectFrontmatter = z.infer<typeof projectFrontmatterSchema>;
 export type ProjectInput = z.infer<typeof projectInputSchema>;
 export type ProjectStatus = (typeof STATUS_VALUES)[number];
@@ -96,6 +115,7 @@ export const projectPatchSchema = z
     live_url: z.url().nullable().optional(),
     recruiter_pitch: z.string().min(1).nullable().optional(),
     tags: z.array(z.string().min(1)).nullable().optional(),
+    api_keys: z.array(apiKeySchema).nullable().optional(),
     /** Raw markdown body (everything below the frontmatter). Not a
      *  frontmatter field — kept here for transport convenience. */
     body: z.string().optional(),
