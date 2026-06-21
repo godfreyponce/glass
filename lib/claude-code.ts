@@ -23,6 +23,9 @@ export interface SpawnOptions {
   systemPrompt: string;
   /** Working directory the agent operates in (project root, gives access to lib/schema.ts and content/projects/). */
   cwd: string;
+  /** Comma-separated tool allowlist. Defaults to "Read,Write,Edit". Pass a
+   *  read-only set (e.g. "Read,Grep,Glob") for recon in foreign directories. */
+  allowedTools?: string;
 }
 
 export interface SpawnedClaude {
@@ -44,7 +47,7 @@ export function spawnClaudeCode(opts: SpawnOptions): SpawnedClaude {
     "--verbose",
     "--include-partial-messages",
     "--allowedTools",
-    "Read,Write,Edit",
+    opts.allowedTools ?? "Read,Write,Edit",
     "--permission-mode",
     "acceptEdits",
     "--append-system-prompt",
@@ -111,12 +114,40 @@ Your job, in one turn:
 
 Rules you must follow:
 - next_action is REQUIRED when status is "in-progress" or "planned"; optional otherwise.
-- Dates are YYYY-MM-DD. Use today's date for started and last_worked_on unless the user specifies.
+- Dates are YYYY-MM-DD and MUST be written as quoted strings (e.g. started: "2026-06-20") so YAML doesn't parse them as timestamps. Use today's date for started and last_worked_on unless the user specifies.
 - Do not invent repo_url or live_url. Omit them if the user didn't mention.
 - Slug in the frontmatter must match the filename.
 - Stack must have at least one entry. If the user didn't say, infer from the description.
+- If the description identifies API keys (a provider plus an env var, and possibly where it's stored), populate the frontmatter \`api_keys\` array per lib/schema.ts: each entry needs a lowercase \`provider\` (e.g. anthropic, openai) and a required \`location\` (where the key is stored — prefer the env file like ".env.local" if that's all you know; NEVER the secret value); \`env_var\` and \`label\` are optional. Only include real third-party provider keys, never app secrets like session secrets or passwords.
 
 Style:
 - The user wants a card created fast. Keep your prose minimal.
 - Don't quote large blocks of YAML back at them; the dashboard renders the card itself.
 - If the user's description is genuinely ambiguous on something critical (e.g. "I'm building something cool"), ask ONE focused clarifying question; don't ask a chain.`;
+
+/**
+ * System prompt for the RECON stage: a read-only pass over a real project
+ * directory that produces a plain-language brief for the card-creating agent.
+ * It must NOT write files — it only inspects and reports. The card agent (which
+ * owns the schema) turns this brief into content/projects/<slug>.md afterward.
+ */
+export const RECON_SYSTEM_PROMPT = `You are doing reconnaissance on a software project so it can be added to a portfolio dashboard. You are read-only: you have Read, Grep, and Glob tools only. Do NOT attempt to write or modify anything.
+
+Inspect the project in your working directory and produce a concise plain-language brief. To do that:
+1. List the top-level files; read the build manifest (package.json, pyproject.toml, Cargo.toml, requirements.txt, go.mod, etc.) and the README if present.
+2. Identify the primary language and framework, and the key libraries.
+3. Find the entry point (e.g. app/page.tsx, main.py, src/index.ts) and the run/dev command.
+4. Skim for TODO/FIXME and the README to infer the project's purpose and current state.
+5. Detect any third-party provider API keys the project uses: check dependencies for provider SDKs (e.g. @anthropic-ai/sdk, openai, stripe) and read .env.example / .env templates / README / config for env vars like ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.
+
+Then output ONLY the brief — no preamble, no questions, no file writes — covering, as far as you can determine:
+- Project name (title case) and a suggested kebab-case slug.
+- Best-guess status: planned | in-progress | completed | archived (judge from README maturity, activity, presence of a deployed URL).
+- Stack: framework, language, key libraries (up to 6).
+- A suggested next action — one sentence, based on TODOs and project state.
+- The run command and the entry point path.
+- A one-sentence, plain-English recruiter pitch (no jargon): what it does and why it's interesting.
+- 3–5 lowercase tags.
+- API keys: any third-party provider API keys the project uses. For each, give the provider id (lowercase, e.g. anthropic, openai), the env var name (e.g. ANTHROPIC_API_KEY), and where the key appears to be stored (e.g. ".env.local" if there's a .env template) — note "storage location unknown" if you can't tell. Exclude generic app secrets (session secrets, passwords, database URLs); only external-service API keys. If there are none, say "no API keys".
+
+Some facts (git dates, repo remote, the directory path) are provided to you in the message — use them; don't try to run git yourself (you can't). Keep the brief tight and factual. If you genuinely cannot determine something, say so briefly rather than inventing it.`;
