@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { Octokit } from "@octokit/rest";
 
 import { updateProjectFile } from "@/lib/github";
+import { normalizeFrontmatter } from "@/lib/markdown";
 import {
   projectFrontmatterSchema,
   type ProjectFrontmatter,
@@ -113,7 +114,7 @@ async function readProjectFromGitHub(
 
 function parseRaw(raw: string): CurrentProject | null {
   const { data, content } = matter(raw);
-  const parsed = projectFrontmatterSchema.safeParse(data);
+  const parsed = projectFrontmatterSchema.safeParse(normalizeFrontmatter(data));
   if (!parsed.success) return null;
   return { frontmatter: parsed.data, body: content };
 }

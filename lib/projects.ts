@@ -8,6 +8,7 @@ import {
   projectFrontmatterSchema,
   type ProjectFrontmatter,
 } from "@/lib/schema";
+import { normalizeFrontmatter } from "@/lib/markdown";
 
 const PROJECTS_DIR = path.join(process.cwd(), "content", "projects");
 
@@ -47,7 +48,7 @@ export async function readAllProjects(): Promise<ProjectFrontmatter[]> {
     const raw = await fs.readFile(fullPath, "utf8");
     const { data } = matter(raw);
 
-    const parsed = projectFrontmatterSchema.safeParse(data);
+    const parsed = projectFrontmatterSchema.safeParse(normalizeFrontmatter(data));
     if (!parsed.success) {
       console.warn(
         `Skipping ${file}: frontmatter failed schema validation — ` +
@@ -99,7 +100,7 @@ export async function readProject(
   }
 
   const { data, content } = matter(raw);
-  const parsed = projectFrontmatterSchema.safeParse(data);
+  const parsed = projectFrontmatterSchema.safeParse(normalizeFrontmatter(data));
   if (!parsed.success) {
     console.warn(
       `Project ${slug}.md failed schema validation: ` +
