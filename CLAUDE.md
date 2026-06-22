@@ -14,31 +14,37 @@
 - Tests: Vitest (add when first non-trivial logic appears — don't scaffold prematurely)
 
 ## Feature surface (Phase 1)
-- `/` — dashboard home; cards grouped by status in collapsible sections (In Progress open by default). Empty Planned section has a spot illustration.
-- `/projects/[slug]` — detail page; full frontmatter table + rendered markdown body; `local_path` only shown with `?private=1`.
-- `/new` — manual form; passphrase field + POST to `/api/projects`; commits a new `.md` via Octokit.
-- `/new/quick` — **dev-only** chat panel that spawns local `claude` headless (`-p --output-format stream-json`, MAX-plan OAuth, no API key); Claude writes the file directly via its Write tool.
-- **Inline editing** — padlock toggle (top-right of dashboard + detail) unlocks edit mode after passphrase check against `/api/auth/check`. Every frontmatter field is double-click-editable (`<EditableField>`); markdown body has an explicit "Edit body" button (`<EditableBody>`). Esc cancels, Enter (or Cmd/Ctrl+Enter for textareas) saves.
+- `/` — dashboard home; cards grouped by status in collapsible sections (In Progress open by default). Empty Planned section has a spot illustration. Header has a **Keys** popover (see API-key tracking).
+- `/projects/[slug]` — detail page; full frontmatter table + rendered markdown body; `local_path` only shown with `?private=1`. `api_keys` are editable inline here.
+- `/new` — manual form; passphrase field + POST to `/api/projects`; commits a new `.md` via Octokit. Includes repeatable `api_keys` rows.
+- `/new/quick` — **dev-only**. Two paths: (1) describe a project in plain language; (2) **Choose project** → native macOS folder picker (`/api/pick-dir`) → two-stage headless pipeline: read-only *recon* in that dir builds a brief, then the schema-owning *card* agent writes the `.md`. Spawns local `claude` headless (`-p --output-format stream-json`, MAX-plan OAuth, no API key).
+- **API-key tracking** — projects carry an optional `api_keys` array (metadata only, NEVER secrets). Card badge shows provider logos beside status; header **Keys** popover aggregates by provider → distinct key (identity = `label` ?? `location`) with per-project links that jump to + highlight the card. Recon auto-detects provider keys. Logos: `public/logos/<provider>.png` (object-contain, `shrink-0`), generic-key glyph fallback.
+- **Inline editing** — padlock toggle (top-right of dashboard + detail) unlocks edit mode after passphrase check against `/api/auth/check`. Every frontmatter field is double-click-editable (`<EditableField>`); `api_keys` edit via `<EditableKeys>` (chips → click to edit, hover-✕ to remove, "Add key"); markdown body has an explicit "Edit body" button (`<EditableBody>`). Esc cancels, Enter (or Cmd/Ctrl+Enter for textareas) saves.
 - **Hybrid persistence** — dev writes to `content/projects/*.md` on disk for instant feedback (router.refresh); prod commits via Octokit and shows a "Redeploying ~Ns" banner (`<RedeployBanner>`) with optimistic UI during the ~60s redeploy lag.
 - Esc-to-go-back on detail / `/new` / `/new/quick`.
 
 ## Critical files
-- `lib/schema.ts` — the Zod spine. `projectFrontmatterSchema` for full files, `projectInputSchema` for POST, `projectPatchSchema` for PATCH (strict; `body` lives alongside frontmatter for transport).
-- `lib/projects.ts` — server-side read (`readAllProjects`, `readProject`).
+- `lib/schema.ts` — the Zod spine. `projectFrontmatterSchema` for full files, `projectInputSchema` for POST, `projectPatchSchema` for PATCH (strict). `apiKeySchema` + optional `api_keys` array (`provider`/`location`/`env_var?`/`label?`). `body` lives alongside frontmatter for transport.
+- `lib/projects.ts` — server-side read (`readAllProjects`, `readProject`); normalizes frontmatter before validation.
 - `lib/persist.ts` — hybrid write (`persistProjectFile` branches on `NODE_ENV`) + `readCurrentProject` (fetches latest from GitHub in prod to avoid stale-bundle clobbers).
 - `lib/github.ts` — Octokit client; `createProjectFile` (no-clobber, used by POST) and `updateProjectFile` (overwrite-allowed, used by PATCH).
-- `lib/markdown.ts` — `serializeProject` (gray-matter stringify).
-- `lib/claude-code.ts` — `spawnClaudeCode` + `SYSTEM_PROMPT`; dev-only headless spawner.
+- `lib/markdown.ts` — `serializeProject` (gray-matter stringify) + `normalizeFrontmatter` (coerces YAML `Date` → `YYYY-MM-DD` string before validation; an unquoted date in a `.md` would otherwise fail the string schema and silently drop the project — a real footgun for agent-written files).
+- `lib/keys.ts` — `aggregateKeys` (group `api_keys` by provider → distinct key) + `providerLabel`.
+- `lib/focus.ts` — client event bus for "jump to a project card" from the Keys popover (`FOCUS_PROJECT_EVENT`, `playFocusPop`).
+- `lib/claude-code.ts` — `spawnClaudeCode` (configurable `allowedTools`) + `SYSTEM_PROMPT` (card creator) + `RECON_SYSTEM_PROMPT` (read-only project recon; detects API keys, quotes dates); dev-only headless spawner.
 - `app/api/projects/route.ts` — **POST** create; passphrase in body.
-- `app/api/projects/[slug]/route.ts` — **PATCH** update; passphrase in `x-passphrase` header; accepts frontmatter fields and `body`.
-- `app/api/quick/route.ts` — SSE proxy to local Claude Code; returns 503 in prod.
+- `app/api/projects/[slug]/route.ts` — **PATCH** update; passphrase in `x-passphrase` header; accepts frontmatter fields (incl. `api_keys`; `null` clears) and `body`.
+- `app/api/quick/route.ts` — **dev-only** SSE; single-stage (describe) or two-stage (recon-in-`projectDir` → card). 503 in prod.
+- `app/api/pick-dir/route.ts` — **dev-only**, macOS only; native folder picker via `osascript`. 503 in prod.
 - `app/api/auth/check/route.ts` — passphrase validator for the LockToggle.
 - `components/LockProvider.tsx` + `LockToggle.tsx` — sessionStorage-backed edit state via `useLock()`.
-- `components/EditableField.tsx` + `EditableBody.tsx` — inline-edit primitives.
-- `components/QuickChat.tsx` — dev-only Claude Code chat UI with SSE parsing.
+- `components/EditableField.tsx` + `EditableBody.tsx` + `EditableKeys.tsx` — inline-edit primitives (`EditableKeys` = the `api_keys` array editor; PATCHes the whole array).
+- `components/KeyBadge.tsx` / `KeysPopover.tsx` / `ProviderLogo.tsx` — API-key UI (card badge / header popover / logo with key-glyph fallback).
+- `components/QuickChat.tsx` — dev-only Claude Code chat UI (describe + choose-project) with SSE parsing.
 - `components/ProjectCard.tsx` / `ProjectSection.tsx` / `StatusBadge.tsx` / `RedeployBanner.tsx` / `EditableDetailView.tsx` / `NewProjectForm.tsx` / `EscToGoBack.tsx` / `PlannedSketch.tsx` — supporting UI.
-- `content/projects/*.md` — the data.
+- `content/projects/*.md` — the data. `public/logos/*.png` — provider logos.
 - `.env.example` — full list of 5 env vars needed in Vercel and `.env.local`.
+- `docs/superpowers/specs/*.md` — design specs (api-key tracking, quick-add-by-directory).
 
 ## How to verify your changes
 Run these yourself before claiming "done."
