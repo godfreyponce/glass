@@ -22,7 +22,7 @@ export default function KeyBadge({ apiKeys }: { apiKeys: ApiKey[] }) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-[13px] w-[13px] text-muted"
+        className="h-[15px] w-[15px] text-muted"
       >
         <title>{summary}</title>
         <circle cx="7.5" cy="15.5" r="5.5" />
@@ -36,7 +36,7 @@ export default function KeyBadge({ apiKeys }: { apiKeys: ApiKey[] }) {
             title={providerLabel(key.provider)}
             className="inline-flex"
           >
-            <ProviderLogo provider={key.provider} />
+            <ProviderLogo provider={key.provider} box="h-[24px] w-[24px]" />
           </span>
         ))}
       </span>

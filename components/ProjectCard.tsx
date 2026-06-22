@@ -74,7 +74,7 @@ export default function ProjectCard({
             initialValue={project.name}
           />
         </h3>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {project.api_keys && project.api_keys.length > 0 && (
             <KeyBadge apiKeys={project.api_keys} />
           )}

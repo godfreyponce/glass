@@ -47,7 +47,7 @@ export default function ProviderLogo({
       src={`/logos/${provider}.png`}
       alt={provider}
       onError={() => setFailed(true)}
-      className={`${box} rounded-[5px] object-contain`}
+      className={`${box} shrink-0 rounded-[5px] object-contain`}
     />
   );
 }
