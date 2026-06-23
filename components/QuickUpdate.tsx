@@ -163,7 +163,7 @@ export default function QuickUpdate({ projects }: { projects: ProjectOption[] })
       )}
 
       <p className="text-xs text-muted">
-        Reads <code>glass.md</code> from the project&apos;s folder (via its
+        Reads <code>glass.md</code>{" "}from the project&apos;s folder (via its
         local_path) and syncs only status, last worked on, and next action. Run{" "}
         <code>GLASS_PROMPT.md</code> in the project first to refresh its glass.md.
       </p>
