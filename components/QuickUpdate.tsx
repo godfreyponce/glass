@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -22,6 +22,8 @@ export default function QuickUpdate({ projects }: { projects: ProjectOption[] })
   const [preview, setPreview] = useState<{ current: Triple; proposed: Triple } | null>(null);
   const [applied, setApplied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Guards against an earlier preview response overwriting a later selection.
+  const latestRequest = useRef(0);
 
   async function loadPreview(nextSlug: string) {
     setSlug(nextSlug);
@@ -29,6 +31,7 @@ export default function QuickUpdate({ projects }: { projects: ProjectOption[] })
     setApplied(false);
     setError(null);
     if (!nextSlug) return;
+    const reqId = ++latestRequest.current;
     setLoading(true);
     try {
       const res = await fetch("/api/quick/update", {
@@ -41,15 +44,18 @@ export default function QuickUpdate({ projects }: { projects: ProjectOption[] })
         proposed?: Triple;
         error?: string;
       };
+      if (reqId !== latestRequest.current) return; // a newer selection superseded this one
       if (!res.ok || !data.current || !data.proposed) {
         setError(data.error ?? `Could not read glass.md (${res.status}).`);
         return;
       }
       setPreview({ current: data.current, proposed: data.proposed });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed.");
+      if (reqId === latestRequest.current) {
+        setError(err instanceof Error ? err.message : "Request failed.");
+      }
     } finally {
-      setLoading(false);
+      if (reqId === latestRequest.current) setLoading(false);
     }
   }
 
@@ -158,8 +164,8 @@ export default function QuickUpdate({ projects }: { projects: ProjectOption[] })
 
       <p className="text-xs text-muted">
         Reads <code>glass.md</code> from the project&apos;s folder (via its
-        local_path) and syncs only status, last worked on, and next action. Run
-        <code> GLASS_PROMPT.md</code> in the project first to refresh its glass.md.
+        local_path) and syncs only status, last worked on, and next action. Run{" "}
+        <code>GLASS_PROMPT.md</code> in the project first to refresh its glass.md.
       </p>
     </div>
   );

@@ -15,11 +15,23 @@ export default function QuickTabs({ projects }: { projects: ProjectOption[] }) {
 
   return (
     <div className="mt-8">
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={() => setTab("add")} className={tabClass(tab === "add")}>
+      <div className="flex items-center gap-2" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "add"}
+          onClick={() => setTab("add")}
+          className={tabClass(tab === "add")}
+        >
           Add
         </button>
-        <button type="button" onClick={() => setTab("update")} className={tabClass(tab === "update")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "update"}
+          onClick={() => setTab("update")}
+          className={tabClass(tab === "update")}
+        >
           Update state
         </button>
       </div>
