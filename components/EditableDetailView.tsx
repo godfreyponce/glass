@@ -2,6 +2,8 @@
 
 import { format, parseISO } from "date-fns";
 
+import { formatWorkedOn } from "@/lib/dates";
+
 import type { ProjectFrontmatter } from "@/lib/schema";
 import StatusBadge from "@/components/StatusBadge";
 import EditableField from "@/components/EditableField";
@@ -95,9 +97,7 @@ export default function EditableDetailView({
               field="last_worked_on"
               type="date"
               initialValue={fm.last_worked_on}
-              display={(v) =>
-                typeof v === "string" ? format(parseISO(v), "MMM d, yyyy") : "—"
-              }
+              display={(v) => (typeof v === "string" ? formatWorkedOn(v) : "—")}
             />
           </span>
           <span className="uppercase tracking-[0.06em]">

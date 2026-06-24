@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
+import { formatWorkedOn } from "@/lib/dates";
 
 import type { ProjectFrontmatter } from "@/lib/schema";
 import StatusBadge from "@/components/StatusBadge";
@@ -168,9 +168,7 @@ export default function ProjectCard({
             field="last_worked_on"
             type="date"
             initialValue={project.last_worked_on}
-            display={(v) =>
-              typeof v === "string" ? format(parseISO(v), "MMM d, yyyy") : "—"
-            }
+            display={(v) => (typeof v === "string" ? formatWorkedOn(v) : "—")}
           />
         </span>
         {locked ? (

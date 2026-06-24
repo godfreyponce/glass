@@ -1,16 +1,26 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import QuickChat from "@/components/QuickChat";
+import QuickTabs from "@/components/QuickTabs";
 import EscToGoBack from "@/components/EscToGoBack";
 import { isAvailable } from "@/lib/claude-code";
+import { readAllProjects } from "@/lib/projects";
 
 export const metadata: Metadata = {
   title: "Quick add — Glass",
 };
 
-export default function QuickAddPage() {
+export default async function QuickAddPage() {
   const dev = isAvailable();
+  const projects = dev
+    ? (await readAllProjects()).map((p) => ({
+        slug: p.slug,
+        name: p.name,
+        status: p.status,
+        last_worked_on: p.last_worked_on,
+        next_action: p.next_action,
+      }))
+    : [];
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-20 sm:py-28">
@@ -33,7 +43,7 @@ export default function QuickAddPage() {
       </header>
 
       {dev ? (
-        <QuickChat />
+        <QuickTabs projects={projects} />
       ) : (
         <div className="rise mt-10 rounded-[8px] border border-line bg-surface p-6 text-sm text-muted">
           <p className="text-ink">This feature only runs in local development.</p>
