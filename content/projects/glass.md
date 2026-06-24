@@ -11,11 +11,9 @@ stack:
   - gray-matter
   - Octokit
 started: '2026-05-23'
-last_worked_on: '2026-05-23'
-next_action: >-
-  Begin Phase 2 — real auth, delete-via-UI, and publishing the database
-  migration writeup.
-local_path: /Users/geovponce/Desktop/glass
+last_worked_on: '2026-06-23T15:45'
+next_action: 'Test the glass.md state-sync flow end-to-end, then start Phase 2.'
+local_path: /Users/geovponce/Developer/glass
 repo_url: 'https://github.com/godfreyponce/glass'
 live_url: 'https://glass-green-one.vercel.app'
 recruiter_pitch: >-
