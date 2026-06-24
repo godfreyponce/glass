@@ -22,6 +22,14 @@ describe("parseGlassState", () => {
     if (r.ok) expect(r.state.next_action).toBe("Wire up auth");
   });
 
+  it("accepts last_worked_on with an optional time", () => {
+    const r = parseGlassState(
+      file('slug: kal\nstatus: completed\nlast_worked_on: "2026-06-22T14:30"'),
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.state.last_worked_on).toBe("2026-06-22T14:30");
+  });
+
   it("normalizes an unquoted YAML date to a string", () => {
     const r = parseGlassState(file("slug: kal\nstatus: completed\nlast_worked_on: 2026-06-22"));
     expect(r.ok).toBe(true);

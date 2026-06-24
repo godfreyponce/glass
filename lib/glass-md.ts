@@ -31,7 +31,10 @@ const glassStateSchema = z
     status: z.enum(STATUS_VALUES),
     last_worked_on: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "last_worked_on must be an ISO date (YYYY-MM-DD)"),
+      .regex(
+        /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?$/,
+        "last_worked_on must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
+      ),
     next_action: z.string().min(1).optional(),
   })
   .superRefine((d, ctx) => {

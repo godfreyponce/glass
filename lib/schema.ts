@@ -19,6 +19,16 @@ const isoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be an ISO date (YYYY-MM-DD)");
 
+// `last_worked_on` additionally accepts an optional time (YYYY-MM-DDTHH:MM),
+// so a project can record when — not just the day — it was last touched.
+// Date-only values stay valid, so existing cards are unaffected.
+const isoDateOrDateTime = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?$/,
+    "Must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
+  );
+
 const slugField = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Must be kebab-case (a-z, 0-9, hyphens)");
@@ -45,7 +55,7 @@ const baseShape = {
   priority: z.enum(PRIORITY_VALUES),
   stack: z.array(z.string().min(1)).min(1, "stack needs at least one item"),
   started: isoDate,
-  last_worked_on: isoDate,
+  last_worked_on: isoDateOrDateTime,
   next_action: z.string().min(1).optional(),
   run_command: z.string().min(1).optional(),
   entry_point: z.string().min(1).optional(),
@@ -106,7 +116,7 @@ export const projectPatchSchema = z
     priority: z.enum(PRIORITY_VALUES).optional(),
     stack: z.array(z.string().min(1)).min(1).optional(),
     started: isoDate.optional(),
-    last_worked_on: isoDate.optional(),
+    last_worked_on: isoDateOrDateTime.optional(),
     next_action: z.string().min(1).nullable().optional(),
     run_command: z.string().min(1).nullable().optional(),
     entry_point: z.string().min(1).nullable().optional(),
