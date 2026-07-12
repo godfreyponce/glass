@@ -13,8 +13,10 @@ type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const projects = await readAllProjects();
-  return projects.map((p) => ({ slug: p.slug }));
+  const { projects } = await readAllProjects();
+  return projects
+    .filter((p) => p.store === "public")
+    .map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({

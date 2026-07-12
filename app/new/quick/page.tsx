@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function QuickAddPage() {
   const dev = isAvailable();
   const projects = dev
-    ? (await readAllProjects()).map((p) => ({
+    ? (await readAllProjects()).projects.map((p) => ({
         slug: p.slug,
         name: p.name,
         status: p.status,

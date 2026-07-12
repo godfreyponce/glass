@@ -90,12 +90,13 @@ function PlannedEmptyState() {
 }
 
 export default async function HomePage() {
-  const projects = await readAllProjects();
+  const { projects, privateStoreError } = await readAllProjects();
+  void privateStoreError; // rendered in the private-visibility task
 
   const byStatus = (status: ProjectStatus): ProjectFrontmatter[] =>
     projects.filter((p) => p.status === status);
 
-  const keyGroups = aggregateKeys(projects);
+  const keyGroups = aggregateKeys(projects.filter((p) => p.store === "public"));
   const keyTotal = totalKeyCount(keyGroups);
 
   return (
