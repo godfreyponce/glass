@@ -43,3 +43,6 @@ next-env.d.ts
 
 # claude code harness state (not project code)
 .claude/
+
+# private card store — a clone of godfreyponce/glass-private; NEVER commit to this (public) repo
+/content/private/
