@@ -31,10 +31,17 @@ import {
 
 const execFileP = promisify(execFile);
 
+/** Appended to the card agent's system prompt for private cards — redirects
+ *  the write target to the gitignored private store. */
+const PRIVATE_CARD_OVERRIDE = `
+
+IMPORTANT OVERRIDE: This is a PRIVATE card. Write the file at content/private/projects/<slug>.md — NOT content/projects/. All other rules are unchanged.`;
+
 const bodySchema = z
   .object({
     prompt: z.string().max(4000).optional(),
     projectDir: z.string().min(1).optional(),
+    isPrivate: z.boolean().optional(),
     resumeSessionId: z.string().optional(),
   })
   .refine((d) => (d.prompt && d.prompt.trim().length > 0) || d.projectDir, {
@@ -89,7 +96,10 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
-  const projectsDir = path.join(process.cwd(), "content", "projects");
+  const isPrivate = parsed.data.isPrivate === true;
+  const projectsDir = isPrivate
+    ? path.join(process.cwd(), "content", "private", "projects")
+    : path.join(process.cwd(), "content", "projects");
   const holder: ChildHolder = { child: null };
 
   const stream = new ReadableStream<Uint8Array>({
@@ -138,6 +148,9 @@ export async function POST(request: Request): Promise<Response> {
         }
 
         // ---- Stage 2: card (always) ----
+        if (isPrivate) {
+          await fs.mkdir(projectsDir, { recursive: true });
+        }
         const beforeFiles = await snapshotProjects(projectsDir);
 
         const cardResult = await streamAgent(
@@ -145,7 +158,7 @@ export async function POST(request: Request): Promise<Response> {
           {
             prompt: cardInput,
             resumeSessionId: parsed.data.resumeSessionId,
-            systemPrompt: SYSTEM_PROMPT,
+            systemPrompt: isPrivate ? SYSTEM_PROMPT + PRIVATE_CARD_OVERRIDE : SYSTEM_PROMPT,
             cwd: process.cwd(),
             allowedTools: "Read,Write,Edit",
           },

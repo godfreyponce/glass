@@ -35,6 +35,7 @@ export default function QuickChat() {
   const [streaming, setStreaming] = useState(false);
   const [picking, setPicking] = useState(false);
   const [projectDir, setProjectDir] = useState<string | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
   const [createdExisted, setCreatedExisted] = useState(false);
@@ -98,6 +99,7 @@ export default function QuickChat() {
         body: JSON.stringify({
           prompt: notes.length > 0 ? notes : undefined,
           projectDir: projectDir ?? undefined,
+          isPrivate,
           resumeSessionId: sessionId ?? undefined,
         }),
       });
@@ -322,15 +324,27 @@ export default function QuickChat() {
           className="w-full rounded-[6px] border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-[#bdbdbd] disabled:opacity-60"
         />
         <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={chooseProject}
-            disabled={streaming || picking}
-            className="inline-flex items-center gap-2 rounded-[6px] border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-[#f7f6f3] disabled:opacity-50"
-          >
-            <span aria-hidden>📁</span>
-            {picking ? "Opening…" : projectDir ? "Change project" : "Choose project"}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={chooseProject}
+              disabled={streaming || picking}
+              className="inline-flex items-center gap-2 rounded-[6px] border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-[#f7f6f3] disabled:opacity-50"
+            >
+              <span aria-hidden>📁</span>
+              {picking ? "Opening…" : projectDir ? "Change project" : "Choose project"}
+            </button>
+            <label className="flex items-center gap-2 text-sm text-muted">
+              <input
+                type="checkbox"
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+                disabled={streaming}
+                className="h-3.5 w-3.5 accent-[#111111]"
+              />
+              Private card (kept out of the public repo)
+            </label>
+          </div>
           <div className="flex items-center gap-2">
             {messages.length > 0 && (
               <button
