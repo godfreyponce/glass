@@ -9,6 +9,7 @@ import {
   type ProjectFrontmatter,
 } from "@/lib/schema";
 import { normalizeFrontmatter } from "@/lib/markdown";
+import { fetchPrivateCardRaw, fetchPrivateRaws } from "@/lib/private-store";
 
 const PROJECTS_DIR = path.join(process.cwd(), "content", "projects");
 const PRIVATE_PROJECTS_DIR = path.join(
@@ -116,8 +117,7 @@ export function mergeProjects(
 
 /**
  * Loads raw private cards. Dev: the local clone at content/private/projects/.
- * Prod: fetched from the private GitHub repo (wired in a follow-up task;
- * returns empty until then).
+ * Prod: fetched from the private GitHub repo.
  */
 async function loadPrivateRaws(): Promise<{
   raws: RawCard[];
@@ -126,7 +126,17 @@ async function loadPrivateRaws(): Promise<{
   if (process.env.NODE_ENV === "development") {
     return { raws: await readDirRaws(PRIVATE_PROJECTS_DIR), error: null };
   }
-  return { raws: [], error: null };
+  try {
+    return { raws: await fetchPrivateRaws(), error: null };
+  } catch (err) {
+    console.warn(
+      `Private store fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return {
+      raws: [],
+      error: "Couldn't load private cards right now — public cards are unaffected.",
+    };
+  }
 }
 
 /**
@@ -177,8 +187,7 @@ async function parseDetail(
 
 /**
  * Reads a single project by slug — public store first (public wins), then
- * private. Returns null if missing or invalid. Prod private lookup is wired
- * in a follow-up task.
+ * private. Returns null if missing or invalid.
  */
 export async function readProject(slug: string): Promise<ProjectDetail | null> {
   // Guard against path traversal — slug must be a plain kebab token.
@@ -195,10 +204,19 @@ export async function readProject(slug: string): Promise<ProjectDetail | null> {
     const privateRaw = await readLocalRaw(
       path.join(PRIVATE_PROJECTS_DIR, `${slug}.md`),
     );
-    if (privateRaw !== null) {
-      return parseDetail(privateRaw, slug, "private");
-    }
+    return privateRaw !== null
+      ? parseDetail(privateRaw, slug, "private")
+      : null;
   }
 
-  return null;
+  let privateRaw: string | null;
+  try {
+    privateRaw = await fetchPrivateCardRaw(slug);
+  } catch (err) {
+    console.warn(
+      `Private card fetch failed for "${slug}": ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return null;
+  }
+  return privateRaw !== null ? parseDetail(privateRaw, slug, "private") : null;
 }

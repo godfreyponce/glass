@@ -11,6 +11,10 @@ import RedeployBanner from "@/components/RedeployBanner";
 import { aggregateKeys, totalKeyCount } from "@/lib/keys";
 import { isAvailable as quickAddAvailable } from "@/lib/claude-code";
 
+// Private cards are fetched from the private repo at request time in prod;
+// ISR keeps them at most ~60s stale without a redeploy.
+export const revalidate = 60;
+
 const SECTIONS: {
   status: ProjectStatus;
   title: string;

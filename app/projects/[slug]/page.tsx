@@ -9,6 +9,10 @@ import EditableBody from "@/components/EditableBody";
 import LockToggle from "@/components/LockToggle";
 import RedeployBanner from "@/components/RedeployBanner";
 
+// Private cards are fetched from the private repo at request time in prod;
+// ISR keeps them at most ~60s stale without a redeploy.
+export const revalidate = 60;
+
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
