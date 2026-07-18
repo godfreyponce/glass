@@ -41,8 +41,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# claude code harness state (not project code)
-.claude/
+# claude code harness state is local — but the ticket-system pieces are project code
+.claude/*
+!.claude/commands/
+!.claude/hooks/
+!.claude/settings.json
 
 # private card store — a clone of godfreyponce/glass-private; NEVER commit to this (public) repo
 /content/private/

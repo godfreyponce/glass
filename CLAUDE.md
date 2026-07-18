@@ -57,6 +57,7 @@ npm run dev          # smoke test in browser when relevant
 For any change touching `lib/schema.ts` or `content/projects/*.md`, also confirm `readAllProjects()` parses every seed file without warnings.
 
 ## Workflow rules
+- **Ticket system.** The work queue is GitHub Issues; `STATE.md`'s YAML head names the ticket that is up now. Protocol (one ticket = two sessions, `/plan-ticket` → `/build-ticket`, STATE.md written once per ticket in the accept-commit): `AGENTS.md`. Archive: `docs/HISTORY.md`. A test-gate hook blocks commits with a red suite.
 - **Plan before code.** For any task bigger than a one-file change, output the plan first and wait for approval.
 - **Verify, don't claim.** "Done" means typecheck + lint + build are green AND smoke-tested where relevant. Never say "this should work" — run it.
 - **Surgical edits.** Smallest change that solves the problem. No incidental refactors. No reformatting unrelated files.
