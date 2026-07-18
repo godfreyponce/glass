@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-import { readAllProjects } from "@/lib/projects";
-import type { ProjectFrontmatter, ProjectStatus } from "@/lib/schema";
+import { readAllProjects, type ProjectWithSource } from "@/lib/projects";
+import type { ProjectStatus } from "@/lib/schema";
 import ProjectCard from "@/components/ProjectCard";
 import ProjectSection from "@/components/ProjectSection";
 import PlannedSketch from "@/components/PlannedSketch";
 import LockToggle from "@/components/LockToggle";
+import PrivateToggle from "@/components/PrivateToggle";
 import KeysPopover from "@/components/KeysPopover";
 import RedeployBanner from "@/components/RedeployBanner";
 import { aggregateKeys, totalKeyCount } from "@/lib/keys";
@@ -95,9 +96,8 @@ function PlannedEmptyState() {
 
 export default async function HomePage() {
   const { projects, privateStoreError } = await readAllProjects();
-  void privateStoreError; // rendered in the private-visibility task
 
-  const byStatus = (status: ProjectStatus): ProjectFrontmatter[] =>
+  const byStatus = (status: ProjectStatus): ProjectWithSource[] =>
     projects.filter((p) => p.status === status);
 
   const keyGroups = aggregateKeys(projects.filter((p) => p.store === "public"));
@@ -116,6 +116,7 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <PrivateToggle hasPrivate={projects.some((p) => p.store === "private")} />
           <LockToggle />
           <KeysPopover groups={keyGroups} total={keyTotal} />
           {quickAddAvailable() && (
@@ -141,6 +142,12 @@ export default async function HomePage() {
       </header>
       <RedeployBanner />
 
+      {privateStoreError && (
+        <p className="mt-6 rounded-[6px] border border-line bg-[#faf6ec] px-4 py-3 text-sm text-muted">
+          {privateStoreError}
+        </p>
+      )}
+
       {projects.length === 0 && (
         <p className="mt-16 text-sm text-muted">
           No projects yet. Add a markdown file to{" "}
@@ -161,6 +168,7 @@ export default async function HomePage() {
             defaultOpen={defaultOpen}
             icon={isPlanned ? <PlannedHeaderIcon /> : undefined}
             slugs={items.map((p) => p.slug)}
+            privateCount={items.filter((p) => p.store === "private").length}
           >
             {items.length === 0 && isPlanned ? (
               <PlannedEmptyState />

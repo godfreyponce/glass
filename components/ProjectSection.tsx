@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 
 import { FOCUS_PROJECT_EVENT, type FocusProjectDetail } from "@/lib/focus";
+import { usePrivateVisibility } from "@/components/PrivateVisibilityProvider";
 
 /**
  * Collapsible section: header acts as a toggle button; the grid of project
@@ -15,6 +16,7 @@ export default function ProjectSection({
   defaultOpen = false,
   icon,
   slugs = [],
+  privateCount = 0,
   children,
 }: {
   title: string;
@@ -24,10 +26,13 @@ export default function ProjectSection({
   icon?: React.ReactNode;
   /** Slugs of the projects in this section — used to auto-expand on focus. */
   slugs?: string[];
+  /** How many of this section's cards are private — subtracted from the count while hidden. */
+  privateCount?: number;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
+  const { showPrivate } = usePrivateVisibility();
 
   // Auto-expand when one of this section's projects is targeted from the
   // Keys popover, so the card is visible before it scrolls into view.
@@ -57,7 +62,9 @@ export default function ProjectSection({
         <span className="text-sm font-medium uppercase tracking-[0.1em] text-muted group-hover:text-ink">
           {title}
         </span>
-        <span className="font-mono text-xs text-muted">{count}</span>
+        <span className="font-mono text-xs text-muted">
+          {showPrivate ? count : count - privateCount}
+        </span>
         <span className="ml-auto">
           <svg
             aria-hidden

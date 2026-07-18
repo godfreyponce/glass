@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 
 import { LockProvider } from "@/components/LockProvider";
+import { PrivateVisibilityProvider } from "@/components/PrivateVisibilityProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">
-        <LockProvider>{children}</LockProvider>
+        <LockProvider>
+          <PrivateVisibilityProvider>{children}</PrivateVisibilityProvider>
+        </LockProvider>
       </body>
     </html>
   );

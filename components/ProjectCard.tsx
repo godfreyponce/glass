@@ -2,10 +2,13 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { formatWorkedOn } from "@/lib/dates";
 
 import type { ProjectFrontmatter } from "@/lib/schema";
+import type { ProjectWithSource } from "@/lib/projects";
 import StatusBadge from "@/components/StatusBadge";
+import { usePrivateVisibility } from "@/components/PrivateVisibilityProvider";
 import EditableField from "@/components/EditableField";
 import KeyBadge from "@/components/KeyBadge";
 import {
@@ -21,10 +24,11 @@ export default function ProjectCard({
   project,
   index = 0,
 }: {
-  project: ProjectFrontmatter;
+  project: ProjectWithSource;
   index?: number;
 }) {
   const { locked } = useLock();
+  const { showPrivate } = usePrivateVisibility();
 
   // Jump-to-card from the Keys popover: scroll into view + highlight. If the
   // card's section is collapsed (inert), wait for it to expand first.
@@ -46,6 +50,11 @@ export default function ProjectCard({
     window.addEventListener(FOCUS_PROJECT_EVENT, onFocus);
     return () => window.removeEventListener(FOCUS_PROJECT_EVENT, onFocus);
   }, [project.slug]);
+
+  // After all hooks — hooks can't be conditional.
+  if (project.store === "private" && !showPrivate) {
+    return null;
+  }
 
   const visibleStack = project.stack.slice(0, MAX_STACK);
   const overflow = project.stack.length - visibleStack.length;
@@ -75,6 +84,15 @@ export default function ProjectCard({
           />
         </h3>
         <div className="flex shrink-0 items-center gap-2">
+          {project.store === "private" && (
+            <span
+              title="Private — stored in glass-private, never in the public repo"
+              className="inline-flex items-center gap-1 rounded-full border border-line bg-[#f3f1ec] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted"
+            >
+              <Lock className="h-3 w-3" aria-hidden />
+              Private
+            </span>
+          )}
           {project.api_keys && project.api_keys.length > 0 && (
             <KeyBadge apiKeys={project.api_keys} />
           )}
