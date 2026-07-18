@@ -115,7 +115,7 @@ export async function PATCH(
   const fileContents = matter.stringify(`\n${finalBody.trim()}\n`, data);
 
   try {
-    const result = await persistProjectFile(slug, fileContents);
+    const result = await persistProjectFile(slug, fileContents, current.store);
     // Pre-render the body so the client can show the new content immediately,
     // even in prod where the deployed build hasn't redeployed yet.
     const renderedHtml = (

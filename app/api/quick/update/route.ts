@@ -125,7 +125,7 @@ export async function POST(request: Request): Promise<Response> {
   const fileContents = matter.stringify(`\n${current.body.trim()}\n`, data);
 
   try {
-    const persistResult = await persistProjectFile(slug, fileContents);
+    const persistResult = await persistProjectFile(slug, fileContents, current.store);
     return NextResponse.json({ slug, applied: proposed, persistence: persistResult.mode });
   } catch (err) {
     console.error(`Update ${slug} failed:`, err);
