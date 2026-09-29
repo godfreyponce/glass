@@ -8,8 +8,10 @@ and per-feature detail live in `docs/HISTORY.md`.
 
 **The work queue is GitHub Issues** (`gh issue list`). The `ready-for-agent` label means the issue
 has its four template sections filled in **and** the owner has green-lit it — that's the eligible
-pool. `next_action` picks one out of it. Anything unlabeled still needs owner confirmation before
-starting. Reference issues in commits (`Refs #N`).
+pool. `next_action` picks one out of it. A ticket also isn't ready unless it is **buildable in one
+fresh session** inside the lean-window target — too big means split it before green-lighting.
+Anything unlabeled still needs owner confirmation before starting. Reference issues in commits
+(`Refs #N`).
 ⚠️ This repo is PUBLIC (recruiter-visible): write issues about features and architecture —
 never env values, credentials, or private-card content (anything under `content/private/`).
 
@@ -23,12 +25,21 @@ a fresh session builds from it.
   stop. No code. The owner reads the plan (**gate 1** — cheap; nothing is built yet).
 - `/clear`
 - **`/build-ticket [#N]`** — build from the plan file, run the suite, **paste the real output**,
-  stop before committing. The owner reads the diff (**gate 2**).
-- On the owner's accept: commit, push, close the issue, `/clear`.
+  stop before landing anything on main. Multi-task plans build on a ticket branch with one commit
+  per approved task; single-task plans stay uncommitted in the working tree. The owner reads the
+  diff (**gate 2**).
+- On the owner's accept: land the code (merge the branch, or commit the working tree), then a
+  docs commit; push both together, close the issue, `/clear`.
+
+Planning and reviewing spend judgment; building from an approved plan mostly spends execution.
+The build session may therefore run a cheaper model — start it with `claude --model opus` and
+save Fable's weekly budget for `/plan-ticket` and the gates. The plan's constraints are what keep
+a cheaper builder in bounds; a build that keeps failing gate 2 means the plan was under-specified
+first, the builder too weak second.
 
 # STATE.md is written exactly once per ticket
 
-**In the accept-commit, after the owner accepts. Never mid-session.**
+**In the accept-time docs commit, after the owner accepts. Never mid-session.**
 
 Continuous updates are what makes this file drift and bloat, because a session writes it from a
 context already full of its own work, and it ends up recording things the owner never accepted.
@@ -37,9 +48,11 @@ One write, at the seam:
 - **Mid-session discoveries never touch STATE.md** → `gh issue create` immediately. The issue queue
   is the capture buffer (write anytime, cheap); STATE.md is the accepted-state snapshot (write once).
   Nothing is lost if a session dies — the plan file, the branch, and the issue all outlive it.
-- **The accept-commit carries three things together:** the code, `STATE.md` (Now cleared of the
-  finished item, `next_action` advanced to the next ticket, `last_worked_on` bumped), and the
-  feature's section in `docs/HISTORY.md`. Then close the issue.
+- **Acceptance lands as code commits + one docs commit, pushed together**: the code first — the
+  ticket branch's per-task commits merged, or a single `type: summary` commit for single-task
+  tickets — then one docs commit carrying `STATE.md` (Now cleared of the finished item,
+  `next_action` advanced to the next ticket, `last_worked_on` bumped) and the feature's section
+  in `docs/HISTORY.md`. Then close the issue.
 - **"Now" holds unaccepted work only.** The moment the owner accepts something it moves to
   `docs/HISTORY.md`. Keep "Now" under ~6 lines. Gotchas stay in STATE.md — they're the memory that
   earns its place — but a gotcha lives there only while it would still bite an agent working today.
@@ -52,6 +65,49 @@ OUTSIDE the conversation: `STATE.md` (snapshot), GitHub Issues (queue), `docs/HI
 seams — phase acceptance, plan approval, deploy — rather than letting a session balloon;
 a decision that lives only in conversation memory doesn't exist, so write it to the right
 file the moment it's made.
+
+# Verification scope
+
+- **While iterating, run only the test files for the modules you touched**
+  (`npx vitest run lib/foo.test.ts`). The full check (below) runs once, at the end of
+  `/build-ticket` — and again at the commit gate. Not after every change.
+- **One test runner and one dev server at a time.** Subagents must never run the test suite or
+  start dev servers.
+- **Stop what you started.** Kill any dev server or build you launched before ending the session.
+
+The full check. **Paste the real output**, not a claim about it:
+
+```bash
+npm run typecheck && npm run lint && npm test
+```
+
+Run `npm run build` too when the ticket touched pages, layouts, or anything with a server-client
+boundary — dev mode hides RSC violations that the build catches.
+
+A commit hook (`.claude/hooks/test-gate.sh`, wired in `.claude/settings.json`) runs the suite
+anyway on every `git commit` and blocks you if it's red — but by then you've wasted the owner's
+time. Run it yourself first.
+
+# Visual rule
+
+Anything visual gets 3 single-file HTML variants first; the owner picks; the winner gets wired in.
+Three variants means three shapes — a second flavor of the first shape doesn't count. glass has no
+tracked variants folder, so the plan names where the variants go, and whether the losing variants
+are kept, as a gate 1 decision. For precedent, see `mockups/` (`card-badge.html`,
+`keys-panel.html`, `key-editor.html`) — it is untracked on purpose, so never `git add` it (STATE.md
+gotcha). The winner is wired into the component or page it stands in for.
+
+# Commit format
+
+`type: summary` with a `Refs #N` body line — plain conventional commits (feat:, fix:, chore:,
+refactor:, docs:, test:), no emoji, no AI-attribution trailers: no `Co-Authored-By`, no
+`🤖 Generated with` footer (glass commit policy, `CLAUDE.md`). Commit hook:
+`.claude/hooks/test-gate.sh` (see "Verification scope") — a red suite blocks the commit.
+
+# Glass specifics
+
+- **Schema is sacred.** Reread that section of `CLAUDE.md` before planning anything that touches
+  `lib/schema.ts` or card frontmatter — schema changes need explicit owner approval in the plan.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
