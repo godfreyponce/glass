@@ -71,8 +71,9 @@ file the moment it's made.
 - **While iterating, run only the test files for the modules you touched**
   (`npx vitest run lib/foo.test.ts`). The full check (below) runs once, at the end of
   `/build-ticket` — and again at the commit gate. Not after every change.
-- **One test runner and one dev server at a time.** Subagents must never run the test suite or
-  start dev servers.
+- **At most one dev server and one test run per worktree, on a free port, stopped by whoever
+  started it.** The session that builds the ticket may start them (under `/rt`, that is the build
+  subagent); helper subagents it spawns may not.
 - **Stop what you started.** Kill any dev server or build you launched before ending the session.
 
 The full check. **Paste the real output**, not a claim about it:
