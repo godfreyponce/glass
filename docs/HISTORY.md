@@ -24,3 +24,9 @@ Spec: `docs/superpowers/specs/2026-06-23-glass-md-state-sync-design.md`.
 
 Stage 2 — STATE.md heads + `/sync` sweep with confirm gate (#3). Stage 3 — card redesign
 around richer state (#4). Stage 1 (private card store, #2) is in flight — see STATE.md.
+
+## Frozen (2026-10-26, #5)
+
+Owner froze glass mid Stage 1 (multi-repo hub spec, Q9): no new work. The Tickets button on
+the Developer T3 project replaced it. Code, `feat/stage1-private-store`, the Vercel site, and
+repo visibility stay as they are; #2–#4 stay open.

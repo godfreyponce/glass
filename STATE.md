@@ -1,9 +1,9 @@
 ---
 glass: glass
-status: in-progress
+status: frozen
 last_worked_on: 2026-07-17
-next_action: "#2 — Stage 1 private store: building Tasks 4–6 on feat/stage1-private-store; then owner Task 7 setup"
-blocked_on: ""
+next_action: "none: frozen 2026-10-26; the Tickets button on the Developer T3 project replaced glass"
+blocked_on: "frozen by owner decision 2026-10-26 (multi-repo hub spec, Q9); no new work"
 phase: "Phase 1 + glass.md state sync shipped and deployed; Stage 1 (private card store) mid-build"
 ---
 
